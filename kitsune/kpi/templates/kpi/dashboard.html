@@ -9,6 +9,73 @@
 {% block content %}
   <article id="kpi-dash-rickshaw">
 
+    <section id="kpi-cohort-analysis"
+      data-url="/api/2/cohort">
+
+      <h2>{{_('Retention') }}</h2>
+      <select id="toggle-cohort-type">
+        <option value="contributor">Contributors</option>
+        <option value="contributor:kb:en-US">en-US</option>
+        <option value="contributor:kb:l10n">l10N</option>
+        <option value="contributor:supportforum:helper">Support Forum Help</option>
+        <option value="contributor:aoa">AoA</option>
+      </select>
+      <div id="retention-chart"></div>
+
+      <ul>
+        <li>
+          <p><strong>{% trans %}
+            Number of active contributors to the English KB{% endtrans %}
+          </strong></p>
+          <p>{% trans %}
+            Definition: The number of people who have contributed to the KB in the
+            last 30 days.{% endtrans %}
+          </p>
+          <p>{% trans %}
+            Definition of contribution: edited 1+ article or has reviewed 1+
+            article{% endtrans %}
+          </p>
+        </li>
+        <li>
+          <p><strong>{% trans %}
+            Number of active contributors to the non-English KB{% endtrans %}
+          </strong></p>
+          <p>{% trans %}
+            Definition: The number of people who have contributed to non English
+            KB versions in the last 30 days.{% endtrans %}
+          </p>
+          <p>{% trans %}
+            Definition of contribution: edited 1+ non English article or has
+            reviewed 1+ non English article.{% endtrans %}
+          </p>
+        </li>
+        <li>
+          <p><strong>{% trans %}
+            Number of active forum contributors{% endtrans %}
+          </strong></p>
+          <p>{% trans %}
+            Definition: The number of people who have contributed to the forums in
+            the last 30 days.{% endtrans %}
+          </p>
+          <p>{% trans %}
+            Definition of contribution: wrote 10+ posts{% endtrans %}
+          </p>
+        </li>
+        <li>
+          <p><strong>{% trans %}
+            Number of active Army of Awesome contributors{% endtrans %}
+          </strong></p>
+          <p>{% trans %}
+            Definition: The number of people who have contributed to the Army of
+            Awesome in the last 30 days.{% endtrans %}
+          </p>
+          <p>{% trans %}
+            Definition of contribution: replied to a tweet.{% endtrans %}
+          </p>
+        </li>
+      </ul>
+    </section>
+
     <section id="kpi-questions"
      data-url="{{ url('api.kpi.questions') }}">
 
