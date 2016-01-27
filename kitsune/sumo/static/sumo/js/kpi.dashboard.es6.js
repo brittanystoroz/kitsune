@@ -4,6 +4,8 @@
   'use strict';
 
   function init() {
+    createRetentionChart($('#kpi-cohort-analysis'));
+
     makeKPIGraph($('#kpi-questions'), true, [
       {
         name: gettext('Questions'),
@@ -92,8 +94,6 @@
       }
     ]);
 
-    createRetentionChart($('#kpi-cohort-analysis'));
-
     makeKPIGraph($('#kpi-active-contributors'), false, [
       {
         name: gettext('en-US KB'),
@@ -175,35 +175,6 @@
   }
 
 
-  function getPaginatedJsonData(url) {
-    console.log("Generating cohort analysis!");
-    let retentionData = [];
-    let dataReady = $.Deferred();
-
-    function getRetentionData(url) {
-      $.getJSON(url, function(data) {
-        console.log("Success: ", data);
-        retentionData = retentionData.concat(data.results);
-        if (data.next) {
-          getRetentionData(data.next);
-        }
-        else {
-          dataReady.resolve(retentionData);
-        }
-      }).done(function(data) {
-        console.log("Done!");
-      }).fail(function(error) {
-        console.log("Failed: ", error);
-      }).always(function() {
-        console.log("Always!");
-      });
-    }
-
-    getRetentionData(url);
-    return dataReady;
-  }
-
-
   var RetentionChart = function($container, options) {
     this.dom = {};
     this.dom.container = $container;
@@ -227,7 +198,7 @@
       var xAxis = svg.selectAll(".xAxis")
           .data(self.xAxisNames)
             .enter().append("g")
-            .attr("class", ".xAxis")
+            .attr("class", "xAxis")
 
       var xAxisRects = xAxis.append("rect")
           .attr("x", function(d, i) { return ( i*self.gridSize - self.gridSize); })
@@ -240,7 +211,7 @@
       var xAxisLabels = xAxis.append("text")
           .attr("class", "mono xAxisText")
           .text(function(d,i) { return self.xAxisNames[i] })
-          .attr("x", function(d, i) { var xval = i*self.gridSize - self.gridSize; if (i==0){ return xval+7 } else {return xval+25}})
+          .attr("x", function(d, i) { var xval = i*self.gridSize - self.gridSize; if (i==0){ return xval+15 } else {return xval+25}})
           .attr("y", function(d, i) { return (- self.gridSize/2 +23); })
 
     self.dom.svg = svg;
@@ -279,7 +250,7 @@
                     .attr("width", self.gridSize)
                     .attr("height", self.gridSize/2)
                     .style("fill", function(d) {
-                      return self.colorScale(d.size)
+                      return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100))
                     });
 
                 var sizeText = d3.select(this)
@@ -291,7 +262,14 @@
                       })
                       .attr("y", function(d, i) {
                         return (cohortGroupNumber * self.gridSize/2) + 23;
-                      }).text(function(d) { return d.size; });
+                      }).text(function(d, i) {
+                        let text = d.size;
+                        if (i > 0) {
+                          text = text + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
+                        }
+                        return text;
+                        //return d.size + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
+                      });
 
               });
 
@@ -317,13 +295,13 @@
 
 
   function createRetentionChart($container) {
-    let dataReady = getPaginatedJsonData($container.data('url'));
-    $("#retention-chart").empty();
+    let fetchDataset = getChartData($container.data('url'), 'results');
 
     var retentionChart = new RetentionChart($container, {
-      chartColors: ["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c","#08306b"],
-      xAxisNames: ["Cohort Group", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"],
-      margin: { top: 70, right: 0, bottom: 100, left: 100 },
+      //chartColors: ["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c","#08306b"],
+      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0',"#E6F2E6","#CCE6CC","#80C080","#4DA64D","#198D19"],
+      xAxisNames: ["Cohort", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"],
+      margin: { top: 70, right: 0, bottom: 100, left: 75 },
       width: 860,
       height: 480,
       gridSize: Math.floor(860 / 12),
@@ -332,10 +310,11 @@
     });
 
 
-    dataReady.done(function(data) {
+    fetchDataset.done(function(data) {
+      console.log("DATA DONE!", data);
       retentionChart.data = data;
       console.log('Data is ready!');
-      let yAxisNames = _.uniq(_.pluck(data, 'start')).slice(-12); // DATA READY
+      let yAxisNames = _.uniq(_.pluck(data, 'start')); // .slice(-12) DATA READY
       retentionChart.colorScale = d3.scale.quantile() // DATA READY
               .domain([0, d3.max(data, function (d) {
                 return d.size;
@@ -345,7 +324,7 @@
               var yAxis = retentionChart.dom.svg.selectAll(".yAxis")
               .data(yAxisNames)
                 .enter().append("g")
-                .attr("class", ".yAxis")
+                .attr("class", "yAxis")
 
           var yAxisRects = yAxis.append("rect")
               .attr("x", function(d, i) { return ( - retentionChart.gridSize); })
@@ -358,7 +337,7 @@
           var yAxisLabels = yAxis.append("text") // DATA READY
               .attr("class", "mono yAxisText")
               .text(function(d,i) { return yAxisNames[i] })
-              .attr("x", function(d, i) { return ( - retentionChart.gridSize + 10); })
+              .attr("x", function(d, i) { return ( - retentionChart.gridSize + 5); })
               .attr("y", function(d, i) { return (i * retentionChart.gridSize/2 + 23); })
 
 
@@ -370,15 +349,39 @@
             retentionChart.populateData(data, cohortType);
           });
 
+    }).fail(function(error) {
+      console.log("There was an error retrieving the data: ", error);
     });
   }
 
 
+  function getChartData(url, propertyKey) {
+    let dataReady = $.Deferred();
+    let datumsToCollect = propertyKey;
+    let fetchData = function(url, existingData) {
+      $.getJSON(url, function(data) {
+        existingData = existingData.concat(data[datumsToCollect] || data);
+        if (data.next) {
+          return fetchData(data.next, existingData);
+        } else {
+          dataReady.resolve(existingData);
+        }
+      }).fail(function(error) {
+        dataReady.reject(error);
+      });
+    }
+
+    fetchData(url, []);
+    return dataReady;
+  };
+
+
   function makeKPIGraph($container, bucket, descriptors) {
-    $.getJSON($container.data('url'), function(data) {
+    let fetchDataset = getChartData($container.data('url'), 'objects');
+    fetchDataset.done(function(data) {
       new k.Graph($container, {
         data: {
-          datums: data.objects,
+          datums: data,
           seriesSpec: descriptors
         },
         options: {
@@ -391,6 +394,8 @@
           height: 300
         },
       }).render();
+    }).fail(function(error) {
+      console.log("There was an error retrieving the data: ", error);
     });
   }
 
