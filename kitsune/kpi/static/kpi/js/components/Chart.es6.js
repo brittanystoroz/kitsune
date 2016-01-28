@@ -38,6 +38,10 @@ export default class Chart {
     // true means do a deep merge.
     $.extend(true, this, defaults, options);
 
+    this.colorScale = d3.scale.quantile()
+        .domain([0, 100])
+        .range(this.chartColors);
+
     this.init();
   }
 
@@ -54,6 +58,7 @@ export default class Chart {
 
     // set up x axis
     this.setupAxis('xAxis');
+    this.setupLegend();
   }
 
   setupAxis(axis) {
@@ -86,17 +91,40 @@ export default class Chart {
       })
   }
 
+  setupLegend() {
+    var self = this;
+
+      var legend = self.dom.svg.selectAll('.legend')
+          .data([0].concat(self.colorScale.quantiles()), function(d) { return d; })
+          .enter().append('g')
+          .attr('class', 'legend');
+
+      legend.append('rect')
+        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
+        .attr('y', (12 * self.gridSize/2) + self.gridSize )
+        .attr('width', self.legendElementWidth)
+        .attr('height', self.gridSize / 4)
+        .style('fill', function(d, i) { return self.chartColors[i]; });
+
+      legend.append('text')
+        .attr('class', 'mono legendText')
+        .text(function(d, i) { return '≥ ' + Math.round(i / (self.buckets + 1) * 100) + '%'; })
+        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
+        .attr('y', (12 * self.gridSize/2) + 1.5*self.gridSize );
+  }
+
   init() {
     this.preRender();
 
   }
 
-    populateData(data, filter) {
+  populateData(filter) {
       var self = this;
       // self.data = _.where(self.data, { "kind": filter })
 
+
       var cohort = self.dom.svg.selectAll('.cohort') // DATA READY
-              .data(data).enter().append('g').filter(function(d) {
+              .data(self.data).enter().append('g').filter(function(d) {
                 return d.kind === filter
               });
 
@@ -123,7 +151,9 @@ export default class Chart {
           .attr('width', self.gridSize)
           .attr('height', self.gridSize/2)
           .style('fill', function(d) {
-            return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100))
+            console.log("Percentage: ", Math.floor((d.size / cohortOriginalSize) * 100) || 0);
+            console.log("COLOR SCALE: ", self.colorScale(10));
+            return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100) || 0)
           });
 
         var sizeText = d3.select(this)
@@ -138,31 +168,12 @@ export default class Chart {
               }).text(function(d, i) {
                 let text = d.size;
                 if (i > 0) {
-                  text = text + ' (' + Math.floor((d.size / cohortOriginalSize) * 100) + '%)';
+                  text = text + ' (' + (Math.floor((d.size / cohortOriginalSize) * 100) || 0) + '%)';
                 }
                 return text;
-                // return d.size + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
               });
 
       });
-
-      var legend = self.dom.svg.selectAll('.legend')
-          .data([0].concat(self.colorScale.quantiles()), function(d) { return d; })
-          .enter().append('g')
-          .attr('class', 'legend');
-
-      legend.append('rect')
-        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-        .attr('y', (12 * self.gridSize/2) + self.gridSize )
-        .attr('width', self.legendElementWidth)
-        .attr('height', self.gridSize / 4)
-        .style('fill', function(d, i) { return self.chartColors[i]; });
-
-      legend.append('text')
-        .attr('class', 'mono legendText')
-        .text(function(d) { return '≥ ' + Math.round(d); })
-        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-        .attr('y', (12 * self.gridSize/2) + 1.5*self.gridSize );
 
     }
   }

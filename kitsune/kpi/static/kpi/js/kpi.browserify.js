@@ -1,7 +1,7 @@
 /* globals $:false, gettext: false, k: false, _: false, d3: false */
 import Chart from './components/Chart.es6.js';
 
-function init() {
+
   createRetentionChart($('#kpi-cohort-analysis'));
 
   makeKPIGraph($('#kpi-questions'), true, [
@@ -170,15 +170,12 @@ function init() {
     }
   ]);
 
-}
-
 
 
 
 function createRetentionChart($container) {
   let fetchDataset = getChartData($container.data('url'), 'results');
-
-  var retentionChart = new Chart($container, {
+  let retentionChart = new Chart($container, {
     axes: {
       xAxis: {
         labels: ['Cohort', 'W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12']
@@ -186,22 +183,15 @@ function createRetentionChart($container) {
     }
   });
 
-
   fetchDataset.done(function(data) {
     retentionChart.data = data;
     retentionChart.axes.yAxis.labels = _.uniq(_.pluck(data, 'start')); // .slice(-12) DATA READY
-    retentionChart.colorScale = d3.scale.quantile() // DATA READY
-            .domain([0, d3.max(data, function (d) {
-              return d.size;
-            })])
-            .range(retentionChart.chartColors);
-
     retentionChart.setupAxis('yAxis');
-    retentionChart.populateData(data, 'contributor');
+    retentionChart.populateData('contributor');
 
     $('#toggle-cohort-type').change(function() {
       var cohortType = $(this).val();
-      retentionChart.populateData(data, cohortType);
+      retentionChart.populateData(cohortType);
     });
 
   }).fail(function(error) {
@@ -253,5 +243,3 @@ function makeKPIGraph($container, bucket, descriptors) {
     console.log('There was an error retrieving the data: ', error);
   });
 }
-
-$(init);
