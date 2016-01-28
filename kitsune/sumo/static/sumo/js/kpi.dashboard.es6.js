@@ -174,47 +174,93 @@
 
   }
 
-
   var RetentionChart = function($container, options) {
-    this.dom = {};
-    this.dom.container = $container;
+    let defaults = {
+      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0',"#E6F2E6","#CCE6CC","#80C080","#4DA64D","#198D19"],
+      axes: {
+        xAxis: {
+          labels: []
+        },
+        yAxis: {
+          labels: []
+        },
+        getPosition: function(position, axis, index, gridSize) {
+          console.log("posArgs: ", axis, index, gridSize);
+          if (position === "x" && axis === "xAxis" || position === "y" && axis === "yAxis") {
+            return (index * gridSize - gridSize);
+          }
 
-    for (var key of Object.keys(options)) {
-      this[key] = options[key];
-    }
-    this.init()
+          if (position === "y" && axis === "xAxis" || position === "x" && axis === "yAxis") {
+            return (-gridSize/2);
+          }
+        }
+      },
+      margin: { top: 70, right: 0, bottom: 100, left: 75 },
+      width: 860,
+      height: 430,
+      grid: { rows: 12, columns: 12 },
+      gridSize: 71,
+      buckets: 9,
+      legendElementWidth: 860/9,
+      data: [],
+      dom: {
+        graphContainer: $container.find('.graph').get()[0]
+      }
+    };
+
+    // true means do a deep merge.
+    $.extend(true, this, defaults, options);
+
+    this.init();
+  }
+
+  // render whatever pieces of the chart we can
+  // while we're waiting for all the data to arrive
+  RetentionChart.prototype.preRender = function() {
+
+    // draw the container svg for the chart
+    this.dom.svg = d3.select(this.dom.graphContainer).append("svg")
+      .attr("width", this.width + this.margin.left + this.margin.right)
+      .attr("height", this.height + this.margin.top + this.margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+
+      // set up x axis
+      this.setupAxis('xAxis');
+  }
+
+  RetentionChart.prototype.setupAxis = function(axis) {
+    var self = this;
+    var axisGroup = self.dom.svg.selectAll("." + axis)
+      .data(self.axes[axis].labels)
+        .enter().append("g")
+        .attr("class", axis);
+
+    var axisRects = axisGroup.append("rect")
+      .attr("x", function(d, i) {
+        return self.axes.getPosition("x", axis, i, self.gridSize);
+      })
+      .attr("y", function(d, i) {
+        return self.axes.getPosition("y", axis, i, self.gridSize);
+      })
+        .attr("width", self.gridSize)
+        .attr("height", self.gridSize/2)
+        .attr("class", axis + "Rect border")
+        .attr("fill", "white")
+
+    var axisLabels = axisGroup.append("text")
+        .attr("class", "mono " + axis + "Text")
+        .text(function(d,i) { return d; })
+      .attr("x", function(d, i) {
+        return self.axes.getPosition("x", axis, i, self.gridSize);
+      })
+      .attr("y", function(d, i) {
+        return self.axes.getPosition("y", axis, i, self.gridSize);
+      })
   }
 
   RetentionChart.prototype.init = function() {
-    console.log("INITING");
-    var self = this;
-    var svg = d3.select('#retention-chart').append("svg")
-          .attr("width", self.width + self.margin.left + self.margin.right)
-          .attr("height", self.height + self.margin.top + self.margin.bottom)
-          .append("g")
-          .attr("transform", "translate(" + self.margin.left + "," + self.margin.top + ")");
-
-
-      var xAxis = svg.selectAll(".xAxis")
-          .data(self.xAxisNames)
-            .enter().append("g")
-            .attr("class", "xAxis")
-
-      var xAxisRects = xAxis.append("rect")
-          .attr("x", function(d, i) { return ( i*self.gridSize - self.gridSize); })
-          .attr("y", function(d, i) { return (- self.gridSize/2); })
-          .attr("width", self.gridSize)
-          .attr("height", self.gridSize/2)
-          .attr("class", "xAxisRect border")
-          .attr("fill",function(d, i) { if (i == 0){return "#778899"} else {return "white"}; })
-
-      var xAxisLabels = xAxis.append("text")
-          .attr("class", "mono xAxisText")
-          .text(function(d,i) { return self.xAxisNames[i] })
-          .attr("x", function(d, i) { var xval = i*self.gridSize - self.gridSize; if (i==0){ return xval+15 } else {return xval+25}})
-          .attr("y", function(d, i) { return (- self.gridSize/2 +23); })
-
-    self.dom.svg = svg;
+    this.preRender();
 
   }
 
@@ -298,49 +344,24 @@
     let fetchDataset = getChartData($container.data('url'), 'results');
 
     var retentionChart = new RetentionChart($container, {
-      //chartColors: ["#f7fbff","#deebf7","#c6dbef","#9ecae1","#6baed6","#4292c6","#2171b5","#08519c","#08306b"],
-      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0',"#E6F2E6","#CCE6CC","#80C080","#4DA64D","#198D19"],
-      xAxisNames: ["Cohort", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"],
-      margin: { top: 70, right: 0, bottom: 100, left: 75 },
-      width: 860,
-      height: 480,
-      gridSize: Math.floor(860 / 12),
-      buckets: 9,
-      legendElementWidth: 860/9
+      axes: {
+        xAxis: {
+          labels: ["Cohort", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"]
+        }
+      }
     });
 
 
     fetchDataset.done(function(data) {
-      console.log("DATA DONE!", data);
       retentionChart.data = data;
-      console.log('Data is ready!');
-      let yAxisNames = _.uniq(_.pluck(data, 'start')); // .slice(-12) DATA READY
+      retentionChart.axes.yAxis.labels = _.uniq(_.pluck(data, 'start')); // .slice(-12) DATA READY
       retentionChart.colorScale = d3.scale.quantile() // DATA READY
               .domain([0, d3.max(data, function (d) {
                 return d.size;
               })])
               .range(retentionChart.chartColors);
 
-              var yAxis = retentionChart.dom.svg.selectAll(".yAxis")
-              .data(yAxisNames)
-                .enter().append("g")
-                .attr("class", "yAxis")
-
-          var yAxisRects = yAxis.append("rect")
-              .attr("x", function(d, i) { return ( - retentionChart.gridSize); })
-              .attr("y", function(d, i) { return (i*retentionChart.gridSize/2); })
-              .attr("width", retentionChart.gridSize)
-              .attr("height", retentionChart.gridSize/2)
-              .attr("class", "yAxisRect border")
-              .attr("fill","white")
-
-          var yAxisLabels = yAxis.append("text") // DATA READY
-              .attr("class", "mono yAxisText")
-              .text(function(d,i) { return yAxisNames[i] })
-              .attr("x", function(d, i) { return ( - retentionChart.gridSize + 5); })
-              .attr("y", function(d, i) { return (i * retentionChart.gridSize/2 + 23); })
-
-
+          retentionChart.setupAxis('yAxis');
           retentionChart.populateData(data, "contributor");
 
           $('#toggle-cohort-type').change(function() {
