@@ -616,8 +616,8 @@ PIPELINE_JS = {
         'output_filename': 'build/groups-min.js'
     },
     'kpi.dashboard': {
-        'source_filenames': (
-            'sumo/js/kpi.dashboard.es6.js',
+    'source_filenames': (
+            'kpi/js/kpi.browserify.js',
         ),
         'output_filename': 'build/kpi.dashboard-min.js'
     }
