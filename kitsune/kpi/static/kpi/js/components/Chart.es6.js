@@ -1,9 +1,10 @@
+/* globals d3:false, $:false */
 /* jshint esnext: true */
 
 export default class Chart {
   constructor($container, options) {
     let defaults = {
-      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0',"#E6F2E6","#CCE6CC","#80C080","#4DA64D","#198D19"],
+      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0','#E6F2E6','#CCE6CC','#80C080','#4DA64D','#198D19'],
       axes: {
         xAxis: {
           labels: []
@@ -12,12 +13,11 @@ export default class Chart {
           labels: []
         },
         getPosition: function(position, axis, index, gridSize) {
-          console.log("posArgs: ", axis, index, gridSize);
-          if (position === "x" && axis === "xAxis" || position === "y" && axis === "yAxis") {
+          if (position === 'x' && axis === 'xAxis' || position === 'y' && axis === 'yAxis') {
             return (index * gridSize - gridSize);
           }
 
-          if (position === "y" && axis === "xAxis" || position === "x" && axis === "yAxis") {
+          if (position === 'y' && axis === 'xAxis' || position === 'x' && axis === 'yAxis') {
             return (-gridSize/2);
           }
         }
@@ -46,43 +46,43 @@ export default class Chart {
   preRender() {
 
     // draw the container svg for the chart
-    this.dom.svg = d3.select(this.dom.graphContainer).append("svg")
-      .attr("width", this.width + this.margin.left + this.margin.right)
-      .attr("height", this.height + this.margin.top + this.margin.bottom)
-      .append("g")
-      .attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
+    this.dom.svg = d3.select(this.dom.graphContainer).append('svg')
+      .attr('width', this.width + this.margin.left + this.margin.right)
+      .attr('height', this.height + this.margin.top + this.margin.bottom)
+      .append('g')
+      .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
 
-      // set up x axis
-      this.setupAxis('xAxis');
+    // set up x axis
+    this.setupAxis('xAxis');
   }
 
   setupAxis(axis) {
     var self = this;
-    var axisGroup = self.dom.svg.selectAll("." + axis)
+    var axisGroup = self.dom.svg.selectAll('.' + axis)
       .data(self.axes[axis].labels)
-        .enter().append("g")
-        .attr("class", axis);
+        .enter().append('g')
+        .attr('class', axis);
 
-    var axisRects = axisGroup.append("rect")
-      .attr("x", function(d, i) {
-        return self.axes.getPosition("x", axis, i, self.gridSize);
+    var axisRects = axisGroup.append('rect')
+      .attr('x', function(d, i) {
+        return self.axes.getPosition('x', axis, i, self.gridSize);
       })
-      .attr("y", function(d, i) {
-        return self.axes.getPosition("y", axis, i, self.gridSize);
+      .attr('y', function(d, i) {
+        return self.axes.getPosition('y', axis, i, self.gridSize);
       })
-        .attr("width", self.gridSize)
-        .attr("height", self.gridSize/2)
-        .attr("class", axis + "Rect border")
-        .attr("fill", "white")
+        .attr('width', self.gridSize)
+        .attr('height', self.gridSize/2)
+        .attr('class', axis + 'Rect border')
+        .attr('fill', 'white')
 
-    var axisLabels = axisGroup.append("text")
-        .attr("class", "mono " + axis + "Text")
+    var axisLabels = axisGroup.append('text')
+        .attr('class', 'mono ' + axis + 'Text')
         .text(function(d,i) { return d; })
-      .attr("x", function(d, i) {
-        return self.axes.getPosition("x", axis, i, self.gridSize);
+      .attr('x', function(d, i) {
+        return self.axes.getPosition('x', axis, i, self.gridSize);
       })
-      .attr("y", function(d, i) {
-        return self.axes.getPosition("y", axis, i, self.gridSize);
+      .attr('y', function(d, i) {
+        return self.axes.getPosition('y', axis, i, self.gridSize);
       })
   }
 
@@ -92,77 +92,77 @@ export default class Chart {
   }
 
     populateData(data, filter) {
-      console.log("Populating data...: ", filter);
       var self = this;
       // self.data = _.where(self.data, { "kind": filter })
 
-      var cohort = self.dom.svg.selectAll(".cohort") // DATA READY
-              .data(data).enter().append("g").filter(function(d) {
+      var cohort = self.dom.svg.selectAll('.cohort') // DATA READY
+              .data(data).enter().append('g').filter(function(d) {
                 return d.kind === filter
               });
 
-              cohort.each(function(cohort, i) {
-                var cohortGroupNumber = i;
-                var cohortOriginalSize = cohort.size;
-                var boxes = d3.select(this)
-                  .selectAll('rect')
-                    .data(cohort.retention_metrics);
+      cohort.each(function(cohort, i) {
+        var cohortGroupNumber = i;
+        var cohortOriginalSize = cohort.size;
+        var boxes = d3.select(this)
+          .selectAll('rect')
+            .data(cohort.retention_metrics);
 
-                    boxes.exit().remove();
+        boxes.exit().remove();
 
-                  boxes = d3.select(this).
-                    selectAll('rect')
-                    .data(cohort.retention_metrics)
-                    .enter().append('rect')
-                    .attr("x", function(d, i) {
-                      return i * self.gridSize;
-                    })
-                    .attr("y", function(d, i) {
-                      return cohortGroupNumber * self.gridSize/2; })
-                    .attr("class", "retention-week")
-                    .attr("width", self.gridSize)
-                    .attr("height", self.gridSize/2)
-                    .style("fill", function(d) {
-                      return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100))
-                    });
+        boxes = d3.select(this)
+          .selectAll('rect')
+          .data(cohort.retention_metrics)
+          .enter().append('rect')
+          .attr('x', function(d, i) {
+            return i * self.gridSize;
+          })
+          .attr('y', function(d, i) {
+            return cohortGroupNumber * self.gridSize/2;
+          })
+          .attr('class', 'retention-week')
+          .attr('width', self.gridSize)
+          .attr('height', self.gridSize/2)
+          .style('fill', function(d) {
+            return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100))
+          });
 
-                var sizeText = d3.select(this)
-                  .selectAll('text')
-                    .data(cohort.retention_metrics)
-                  .enter().append("text")
-                      .attr("x", function(d, i ) {
-                        return i * self.gridSize + 10;
-                      })
-                      .attr("y", function(d, i) {
-                        return (cohortGroupNumber * self.gridSize/2) + 23;
-                      }).text(function(d, i) {
-                        let text = d.size;
-                        if (i > 0) {
-                          text = text + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
-                        }
-                        return text;
-                        //return d.size + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
-                      });
-
+        var sizeText = d3.select(this)
+          .selectAll('text')
+            .data(cohort.retention_metrics)
+          .enter().append('text')
+              .attr('x', function(d, i ) {
+                return i * self.gridSize + 10;
+              })
+              .attr('y', function(d, i) {
+                return (cohortGroupNumber * self.gridSize/2) + 23;
+              }).text(function(d, i) {
+                let text = d.size;
+                if (i > 0) {
+                  text = text + ' (' + Math.floor((d.size / cohortOriginalSize) * 100) + '%)';
+                }
+                return text;
+                // return d.size + " (" + Math.floor((d.size / cohortOriginalSize) * 100) + "%)";
               });
 
-          var legend = self.dom.svg.selectAll(".legend")
-              .data([0].concat(self.colorScale.quantiles()), function(d) { return d; })
-              .enter().append("g")
-              .attr("class", "legend");
+      });
 
-          legend.append("rect")
-            .attr("x", function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-            .attr("y", (12 * self.gridSize/2) + self.gridSize )
-            .attr("width", self.legendElementWidth)
-            .attr("height", self.gridSize / 4)
-            .style("fill", function(d, i) { return self.chartColors[i]; });
+      var legend = self.dom.svg.selectAll('.legend')
+          .data([0].concat(self.colorScale.quantiles()), function(d) { return d; })
+          .enter().append('g')
+          .attr('class', 'legend');
 
-          legend.append("text")
-            .attr("class", "mono legendText")
-            .text(function(d) { return "≥ " + Math.round(d); })
-            .attr("x", function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-            .attr("y", (12 * self.gridSize/2) + 1.5*self.gridSize );
+      legend.append('rect')
+        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
+        .attr('y', (12 * self.gridSize/2) + self.gridSize )
+        .attr('width', self.legendElementWidth)
+        .attr('height', self.gridSize / 4)
+        .style('fill', function(d, i) { return self.chartColors[i]; });
+
+      legend.append('text')
+        .attr('class', 'mono legendText')
+        .text(function(d) { return '≥ ' + Math.round(d); })
+        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
+        .attr('y', (12 * self.gridSize/2) + 1.5*self.gridSize );
 
     }
   }

@@ -1,3 +1,4 @@
+/* globals $:false, gettext: false, k: false, _: false, d3: false */
 import Chart from './components/Chart.es6.js';
 
 function init() {
@@ -180,7 +181,7 @@ function createRetentionChart($container) {
   var retentionChart = new Chart($container, {
     axes: {
       xAxis: {
-        labels: ["Cohort", "W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11", "W12"]
+        labels: ['Cohort', 'W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12']
       }
     }
   });
@@ -195,17 +196,16 @@ function createRetentionChart($container) {
             })])
             .range(retentionChart.chartColors);
 
-        retentionChart.setupAxis('yAxis');
-        retentionChart.populateData(data, "contributor");
+    retentionChart.setupAxis('yAxis');
+    retentionChart.populateData(data, 'contributor');
 
-        $('#toggle-cohort-type').change(function() {
-          var cohortType = $(this).val();
-          console.log("Cohort Type Selected: ", cohortType);
-          retentionChart.populateData(data, cohortType);
-        });
+    $('#toggle-cohort-type').change(function() {
+      var cohortType = $(this).val();
+      retentionChart.populateData(data, cohortType);
+    });
 
   }).fail(function(error) {
-    console.log("There was an error retrieving the data: ", error);
+    console.log('There was an error retrieving the data: ', error);
   });
 }
 
@@ -228,7 +228,7 @@ function getChartData(url, propertyKey) {
 
   fetchData(url, []);
   return dataReady;
-};
+}
 
 
 function makeKPIGraph($container, bucket, descriptors) {
@@ -250,7 +250,7 @@ function makeKPIGraph($container, bucket, descriptors) {
       },
     }).render();
   }).fail(function(error) {
-    console.log("There was an error retrieving the data: ", error);
+    console.log('There was an error retrieving the data: ', error);
   });
 }
 
