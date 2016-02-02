@@ -174,19 +174,32 @@ import Chart from './components/Chart.es6.js';
 
 
 function createRetentionChart($container) {
-  let fetchDataset = getChartData($container.data('url'), 'results');
+  let startDate = moment().day(1).day(-84).format('YYYY-MM-DD');
+  let urlToFetch = $container.data('url') + '?start=' + startDate;
+  let fetchDataset = getChartData(urlToFetch, 'results');
   let retentionChart = new Chart($container, {
     axes: {
       xAxis: {
-        labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12']
+        labels() {
+          let labelsArray = [];
+          for (let i = 1; i < 13; i++) {
+            labelsArray.push(gettext('Week') + ' ' + i);
+          }
+          return labelsArray;
+        }
       }
     }
   });
 
   fetchDataset.done(function(data) {
     retentionChart.data = data;
-    retentionChart.axes.yAxis.labels = _.uniq(_.pluck(data, 'start')); // .slice(-12) DATA READY
+    retentionChart.axes.yAxis.labels = _.uniq(_.pluck(data, 'start'));
     retentionChart.setupAxis('yAxis');
+    retentionChart.colorScale = d3.scale.quantile()
+      .domain([0, d3.max(data, function (d) {
+        return d.size;
+      })])
+      .range(retentionChart.chartColors);
     retentionChart.populateData('contributor');
 
     $('#toggle-cohort-type').change(function() {

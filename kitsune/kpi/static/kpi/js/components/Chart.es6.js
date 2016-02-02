@@ -8,7 +8,7 @@ export default class Chart {
       axes: {
         xAxis: {
           labels: [],
-          labelOffsets: { x: 25, y: 23 }
+          labelOffsets: { x: 15, y: 23 }
         },
         yAxis: {
           labels: [],
@@ -24,7 +24,7 @@ export default class Chart {
           }
         }
       },
-      margin: { top: 70, right: 0, bottom: 100, left: 75 },
+      margin: { top: 40, right: 0, bottom: 100, left: 75 },
       width: 860,
       height: 430,
       grid: { rows: 12, columns: 12 },
@@ -38,10 +38,6 @@ export default class Chart {
     };
 
     $.extend(true, this, defaults, options);
-
-    this.colorScale = d3.scale.quantile()
-      .domain([0, 100])
-      .range(this.chartColors);
 
     this.init();
   }
@@ -81,7 +77,7 @@ export default class Chart {
 
   setupLegend() {
     let self = this;
-    let legendData = [0].concat(self.colorScale.quantiles());
+    let legendData = self.chartColors;
     let legendYPosition = (self.grid.rows * self.gridSize/2) + self.gridSize;
     let legendXPositions = i => {
       return (self.legendElementWidth * i) - self.gridSize;
