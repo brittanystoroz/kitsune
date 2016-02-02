@@ -4,21 +4,23 @@
 export default class Chart {
   constructor($container, options) {
     let defaults = {
-      chartColors: ['#ef3b2c','#fc9272', '#fcbba1', '#fee0d2', '#fff5f0','#E6F2E6','#CCE6CC','#80C080','#4DA64D','#198D19'],
+      chartColors: ['#EE2820', '#F25743', '#F58667', '#F9B58B', '#FDE4AF', '#E3F1B6', '#AADA9F', '#72C489', '#39AD72', '#00975C'],
       axes: {
         xAxis: {
-          labels: []
+          labels: [],
+          labelOffsets: { x: 25, y: 23 }
         },
         yAxis: {
-          labels: []
+          labels: [],
+          labelOffsets: { x: 5, y: 23 }
         },
-        getPosition: function(position, axis, index, gridSize) {
-          if (position === 'x' && axis === 'xAxis' || position === 'y' && axis === 'yAxis') {
-            return (index * gridSize - gridSize);
-          }
+        getPosition: (position, axis, index) => {
+          let gridSize = (position === 'y') ? this.gridSize/2 : this.gridSize;
 
-          if (position === 'y' && axis === 'xAxis' || position === 'x' && axis === 'yAxis') {
-            return (-gridSize/2);
+          if (position === axis[0]) {
+            return index * gridSize;
+          } else {
+            return -gridSize;
           }
         }
       },
@@ -27,153 +29,158 @@ export default class Chart {
       height: 430,
       grid: { rows: 12, columns: 12 },
       gridSize: 71,
-      buckets: 9,
-      legendElementWidth: 860/9,
+      buckets: 10,
+      legendElementWidth: 95,
       data: [],
       dom: {
         graphContainer: $container.find('.graph').get()[0]
       }
     };
 
-    // true means do a deep merge.
     $.extend(true, this, defaults, options);
 
     this.colorScale = d3.scale.quantile()
-        .domain([0, 100])
-        .range(this.chartColors);
+      .domain([0, 100])
+      .range(this.chartColors);
 
     this.init();
   }
 
-  // render whatever pieces of the chart we can
-  // while we're waiting for all the data to arrive
+  // Render whatever pieces of the chart we can while waiting for data
   preRender() {
-
     // draw the container svg for the chart
     this.dom.svg = d3.select(this.dom.graphContainer).append('svg')
       .attr('width', this.width + this.margin.left + this.margin.right)
       .attr('height', this.height + this.margin.top + this.margin.bottom)
       .append('g')
-      .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
+        .attr('transform', 'translate(' + this.margin.left + ',' + this.margin.top + ')');
 
-    // set up x axis
+    this.dom.svg.append('g')
+      .attr('class', 'data');
+
     this.setupAxis('xAxis');
     this.setupLegend();
   }
 
   setupAxis(axis) {
-    var self = this;
-    var axisGroup = self.dom.svg.selectAll('.' + axis)
+    let self = this;
+    let axisGroup = self.dom.svg.append('g')
+      .attr('class', axis);
+
+    axisGroup.selectAll()
       .data(self.axes[axis].labels)
-        .enter().append('g')
-        .attr('class', axis);
-
-    var axisRects = axisGroup.append('rect')
-      .attr('x', function(d, i) {
-        return self.axes.getPosition('x', axis, i, self.gridSize);
-      })
-      .attr('y', function(d, i) {
-        return self.axes.getPosition('y', axis, i, self.gridSize);
-      })
-        .attr('width', self.gridSize)
-        .attr('height', self.gridSize/2)
-        .attr('class', axis + 'Rect border')
-        .attr('fill', 'white')
-
-    var axisLabels = axisGroup.append('text')
-        .attr('class', 'mono ' + axis + 'Text')
+        .enter().append('text')
         .text(function(d,i) { return d; })
-      .attr('x', function(d, i) {
-        return self.axes.getPosition('x', axis, i, self.gridSize);
-      })
-      .attr('y', function(d, i) {
-        return self.axes.getPosition('y', axis, i, self.gridSize);
-      })
+        .attr('x', function(d, i) {
+          return self.axes.getPosition('x', axis, i) + self.axes[axis].labelOffsets.x;
+        })
+        .attr('y', function(d, i) {
+          return self.axes.getPosition('y', axis, i) + self.axes[axis].labelOffsets.y;
+        })
   }
 
   setupLegend() {
-    var self = this;
+    let self = this;
+    let legendData = [0].concat(self.colorScale.quantiles());
+    let legendYPosition = (self.grid.rows * self.gridSize/2) + self.gridSize;
+    let legendXPositions = i => {
+      return (self.legendElementWidth * i) - self.gridSize;
+    }
 
-      var legend = self.dom.svg.selectAll('.legend')
-          .data([0].concat(self.colorScale.quantiles()), function(d) { return d; })
-          .enter().append('g')
-          .attr('class', 'legend');
+    let legend = self.dom.svg.append('g')
+      .attr('class', 'legend');
 
-      legend.append('rect')
-        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-        .attr('y', (12 * self.gridSize/2) + self.gridSize )
+    legend.selectAll('rect')
+      .data(legendData, function(d) { return d; })
+        .enter().append('rect')
+        .attr('x', function(d, i) { return legendXPositions(i); })
+        .attr('y', legendYPosition)
         .attr('width', self.legendElementWidth)
-        .attr('height', self.gridSize / 4)
+        .attr('height', self.gridSize / 3.6)
         .style('fill', function(d, i) { return self.chartColors[i]; });
 
-      legend.append('text')
-        .attr('class', 'mono legendText')
-        .text(function(d, i) { return '≥ ' + Math.round(i / (self.buckets + 1) * 100) + '%'; })
-        .attr('x', function(d, i) { return self.legendElementWidth * i - self.gridSize; })
-        .attr('y', (12 * self.gridSize/2) + 1.5*self.gridSize );
+    legend.selectAll('text')
+      .data(legendData, function(d) { return d; })
+        .enter().append('text')
+        .text(function(d, i) { return '≥ ' + Math.round(i / self.buckets * 100) + '%'; })
+        .attr('x', function(d, i) { return legendXPositions(i) + 7; })
+        .attr('y', legendYPosition + 14);
   }
 
   init() {
     this.preRender();
+  }
 
+  setupGrid(filteredData, filter) {
+    let self = this;
+    let kindFilter = filter;
+
+    self.dom.cohorts = self.dom.svg.select('.data').selectAll('g')
+      .data(filteredData);
+
+    self.dom.cohorts.enter().append('g');
+
+    self.dom.cohorts
+      .attr('width', self.width)
+      .attr('height', self.gridSize/2)
+      .attr('x', 0)
+      .attr('y', function(d, i) {
+        return i * self.gridSize/2;
+      })
+      .attr('class', function(d, i) {
+        return 'cohort-group ' + kindFilter;
+      });
+
+    self.dom.cohorts.exit().remove();
   }
 
   populateData(filter) {
-      var self = this;
-      // self.data = _.where(self.data, { "kind": filter })
+    let self = this;
+    let kindFilter = filter;
+    let filteredData = _.filter(self.data, function(datum, index) {
+      return datum.kind === kindFilter;
+    });
 
+    self.setupGrid(filteredData, kindFilter);
 
-      var cohort = self.dom.svg.selectAll('.cohort') // DATA READY
-              .data(self.data).enter().append('g').filter(function(d) {
-                return d.kind === filter
-              });
+    self.dom.cohorts.each(function(cohort, i) {
+      let cohortGroupNumber = i;
+      let cohortOriginalSize = cohort.size;
+      let coloredBoxes = d3.select(this).selectAll('rect')
+        .data(cohort.retention_metrics);
 
-      cohort.each(function(cohort, i) {
-        var cohortGroupNumber = i;
-        var cohortOriginalSize = cohort.size;
-        var boxes = d3.select(this)
-          .selectAll('rect')
-            .data(cohort.retention_metrics);
+      coloredBoxes.enter().append('rect');
 
-        boxes.exit().remove();
+      coloredBoxes
+        .attr('class', 'retention-week')
+        .attr('height', self.gridSize/2)
+        .attr('width', self.gridSize)
+        .attr('x', function(d, i) { return i * self.gridSize; })
+        .attr('y', function(d, i) { return cohortGroupNumber * self.gridSize/2; })
+        .style('fill', function(d) {
+          return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100) || 0);
+        })
+        .style('stroke', '#000')
+        .style('stroke-opacity', 0.05)
+        .style('stroke-width', 1);
 
-        boxes = d3.select(this)
-          .selectAll('rect')
-          .data(cohort.retention_metrics)
-          .enter().append('rect')
-          .attr('x', function(d, i) {
-            return i * self.gridSize;
-          })
-          .attr('y', function(d, i) {
-            return cohortGroupNumber * self.gridSize/2;
-          })
-          .attr('class', 'retention-week')
-          .attr('width', self.gridSize)
-          .attr('height', self.gridSize/2)
-          .style('fill', function(d) {
-            console.log("Percentage: ", Math.floor((d.size / cohortOriginalSize) * 100) || 0);
-            console.log("COLOR SCALE: ", self.colorScale(10));
-            return self.colorScale(Math.floor((d.size / cohortOriginalSize) * 100) || 0)
-          });
+      coloredBoxes.exit().remove();
 
-        var sizeText = d3.select(this)
-          .selectAll('text')
-            .data(cohort.retention_metrics)
-          .enter().append('text')
-              .attr('x', function(d, i ) {
-                return i * self.gridSize + 10;
-              })
-              .attr('y', function(d, i) {
-                return (cohortGroupNumber * self.gridSize/2) + 23;
-              }).text(function(d, i) {
-                let text = d.size;
-                if (i > 0) {
-                  text = text + ' (' + (Math.floor((d.size / cohortOriginalSize) * 100) || 0) + '%)';
-                }
-                return text;
-              });
+      let sizeText = d3.select(this).selectAll('text')
+        .data(cohort.retention_metrics)
+
+      sizeText.enter().append('text');
+
+      sizeText
+        .text(function(d, i) {
+          let percentage = Math.floor((d.size / cohortOriginalSize) * 100) || 0;
+          return d.size + ' (' + percentage + '%)';
+        })
+        .attr('x', function(d, i ) { return i * self.gridSize + 10; })
+        .attr('y', function(d, i) { return (cohortGroupNumber * self.gridSize/2) + 23; });
+
+        sizeText.exit().remove();
 
       });
-
     }
   }
