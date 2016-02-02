@@ -1,4 +1,4 @@
-/* globals d3:false, $:false */
+/* globals d3:false, $:false, _:false */
 /* jshint esnext: true */
 
 export default class Chart {
@@ -175,8 +175,8 @@ export default class Chart {
         .attr('x', function(d, i ) { return i * self.gridSize + 10; })
         .attr('y', function(d, i) { return (cohortGroupNumber * self.gridSize/2) + 23; });
 
-        sizeText.exit().remove();
+      sizeText.exit().remove();
 
-      });
-    }
+    });
   }
+}
